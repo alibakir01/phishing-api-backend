@@ -384,6 +384,13 @@ def predict(request: URLRequest):
         df_feat = build_feature_row(request.url)
         X_sel = build_feature_vector(df_feat)
 
+        print("\n" + "="*50)
+        print("🚨 AJAN 1 (DF Boyutu):", df_feat.shape)
+        print("🚨 AJAN 2 (Vektör Tipi):", type(X_sel))
+        print("🚨 AJAN 3 (Vektör Boyutu):", X_sel.shape)
+        print("🚨 AJAN 4 (Vektör İçeriği):\n", X_sel)
+        print("="*50 + "\n")
+
         probs = model.predict_proba(X_sel)[0]
         prob_safe = float(probs[0])
         prob_phish = float(probs[1])
