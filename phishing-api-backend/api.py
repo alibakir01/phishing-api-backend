@@ -269,28 +269,34 @@ def explain_risk(df_feat: pd.DataFrame) -> List[str]:
     # Shannon entropy
     entropy = row.get("shannon_entropy", 0.0)
     if entropy >= 4.0:
-        reasons.append("URL karakterlerinin entropisi yüksek (rastgele karakter dizileri).")
+        reasons.append(
+            "High Shannon entropy in the URL (suggests randomized or machine-generated strings)."
+        )
 
     # Dangerous TLD
     if int(row.get("is_dangerous_tld", 0)) == 1:
-        reasons.append("Yüksek riskli TLD (uzantı) tespit edildi.")
+        reasons.append("High-risk top-level domain (TLD) detected.")
 
     # IP address
     if int(row.get("has_ip", 0)) == 1:
-        reasons.append("Alan adı yerine IP adresi kullanılıyor.")
+        reasons.append("IP address used instead of a hostname.")
 
     # Brand spoofing
     if int(row.get("has_brand_spoof", 0)) == 1:
-        reasons.append("URL içinde popüler marka ismi şüpheli şekilde kullanılmış (brand spoofing).")
+        reasons.append(
+            "Suspicious use of a well-known brand name in the URL (possible brand spoofing)."
+        )
 
     # Repeated tokens
     if int(row.get("has_repeated_token", 0)) == 1:
-        reasons.append("Tekrarlayan anahtar kelime/tanım parçaları tespit edildi (ör. login-login).")
+        reasons.append(
+            "Repeated keyword or token patterns detected (e.g., login-login)."
+        )
 
     # Digit-letter ratio
     dl_ratio = row.get("digit_letter_ratio", 0.0)
     if dl_ratio >= 0.6:
-        reasons.append("URL'de harflere göre çok sayıda rakam bulunuyor.")
+        reasons.append("Unusually high ratio of digits to letters in the URL.")
 
     # Suspicious keywords
     suspicious_flags = [
@@ -303,12 +309,14 @@ def explain_risk(df_feat: pd.DataFrame) -> List[str]:
         "kw_service",
     ]
     if any(int(row.get(col, 0)) == 1 for col in suspicious_flags):
-        reasons.append("URL içinde şüpheli anahtar kelimeler (login, bank, account vb.) tespit edildi.")
+        reasons.append(
+            "Suspicious keywords detected in the URL (e.g., login, bank, account)."
+        )
 
     # Çok uzun URL
     url_len = row.get("url_length_clean", 0)
     if url_len and url_len > 120:
-        reasons.append("URL olağandışı derecede uzun.")
+        reasons.append("URL length is unusually long.")
 
     # 1-2 kısa ipucuyla sınırlamak için gerekirse kırp
     if len(reasons) > 2:
@@ -353,7 +361,7 @@ def predict(request: URLRequest):
             return PredictionResponse(
                 is_phishing=False,
                 confidence_score=0.01,
-                reasons=["Yerel Geliştirici Ortamı (Localhost / 127.0.0.1) tespit edildi."],
+                reasons=["Local development host detected (localhost / 127.0.0.1)."],
             )
 
         # 1. KESİN WHITELIST KONTROLÜ (Open Redirect - Açık Yönlendirme Korumalı!)
@@ -367,7 +375,7 @@ def predict(request: URLRequest):
             return PredictionResponse(
                 is_phishing=False,
                 confidence_score=0.01,
-                reasons=[f"Güvenilir Altyapı / Whitelist ({reg_domain})"],
+                reasons=[f"Trusted infrastructure / allowlisted domain ({reg_domain})."],
             )
 
         df_feat = build_feature_row(request.url)
@@ -521,7 +529,9 @@ def predict(request: URLRequest):
         return PredictionResponse(
             is_phishing=True, # Fail-Secure (Hata varsa risklidir!)
             confidence_score=99.9,
-            reasons=[f"Sistem analizi başarısız (Şüpheli URL yapısı)"],
+            reasons=[
+                "System analysis failed (suspicious URL structure or internal processing error)."
+            ],
         )
 # Örnek kullanım:
 # uvicorn api:app --host 0.0.0.0 --port 8000 --reload
