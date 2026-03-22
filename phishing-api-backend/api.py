@@ -1,8 +1,10 @@
 import json
 import os
+import re
 import threading
 from datetime import datetime, timezone
-from typing import List, Optional
+from difflib import SequenceMatcher
+from typing import List, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -114,6 +116,51 @@ def _append_feedback_entry(entry: dict) -> None:
         logs.append(entry)
         with open(FEEDBACK_LOG_PATH, "w", encoding="utf-8") as f:
             json.dump(logs, f, indent=2, ensure_ascii=False)
+
+
+def detect_advanced_typosquatting(url: str) -> Tuple[bool, Optional[str]]:
+    """
+    Heuristic typo-squatting / fuzzy brand match on the registrable domain label (no scheme / www / TLD).
+    Returns (True, brand_name) if impersonation is suspected, else (False, None).
+    """
+    top_brands = [
+        "facebook",
+        "instagram",
+        "netflix",
+        "google",
+        "paypal",
+        "apple",
+        "amazon",
+        "microsoft",
+        "linkedin",
+    ]
+
+    ext = tldextract.extract(url)
+    if not ext.domain:
+        return False, None
+
+    base = ext.domain.lower()
+    # Strip non-alphanumeric from domain label for normalization (keep letters/digits for homoglyphs)
+    base = re.sub(r"[^a-z0-9]", "", base)
+    if not base:
+        return False, None
+
+    normalized = base
+    normalized = normalized.replace("rn", "m")
+    normalized = normalized.replace("0", "o")
+    normalized = normalized.replace("1", "i")
+    normalized = normalized.replace("3", "e")
+    normalized = normalized.replace("5", "s")
+
+    for brand in top_brands:
+        if normalized == brand:
+            continue
+        if brand in normalized:
+            return True, brand
+        if SequenceMatcher(None, normalized, brand).ratio() > 0.82:
+            return True, brand
+
+    return False, None
 
 
 def load_model(path: str = MODEL_PATH):
@@ -432,7 +479,18 @@ def predict(request: URLRequest):
             is_phishing = False
             confidence_percent = 5.0  # Skoru acımadan %5'e çakıyoruz
             reasons = ["Ignored risk: URL points to a raw developer file or source code."]
-        
+
+        # Advanced typo-squatting / fuzzy brand layer (overrides final response if triggered)
+        ts_hit, ts_brand = detect_advanced_typosquatting(request.url)
+        if ts_hit and ts_brand:
+            return PredictionResponse(
+                is_phishing=True,
+                confidence_score=98.5,
+                reasons=[
+                    f"🚨 CRITICAL: Brand impersonation detected! Attempting to mimic '{ts_brand}'.",
+                    "Typo-squatting or fuzzy match attack detected.",
+                ],
+            )
 
         # Log dosyasına yaz
         if is_phishing:
