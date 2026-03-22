@@ -428,10 +428,10 @@ def predict(request: URLRequest):
        
         # 5. SEO VE İÇERİK (HABER/BLOG/TARİF) TOLERANSI
         # Eğer linkte IP yoksa, marka taklidi yoksa ve "login, bank, password" gibi tehlikeli kelimeler HİÇ YOKSA:
-        if not has_ip and not has_brand_spoof and not has_dangerous_word and not is_whitelisted:
+        #if not has_ip and not has_brand_spoof and not has_dangerous_word and not is_whitelisted:
             # Sırf sonunda "4213449" gibi id'ler veya tireler var diye modelin çıldırmasını engelle.
-            if prob_phish > 0.45:
-                prob_phish = 0.45    
+         #   if prob_phish > 0.45:
+          #      prob_phish = 0.45    
 
         # Skorları yeniden dengele
         prob_safe = 1.0 - prob_phish
