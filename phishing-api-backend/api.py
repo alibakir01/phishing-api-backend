@@ -347,6 +347,9 @@ def submit_feedback(request: FeedbackRequest):
         print("[ERROR] /feedback exception:", repr(e))
         raise HTTPException(status_code=500, detail="Could not persist feedback.")
 
+@app.get("/")
+def health_check():
+    return {"status": "Phishing Shield API is awake and ready! 🛡️"}
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: URLRequest):
