@@ -153,7 +153,11 @@ def detect_advanced_typosquatting(url: str) -> Tuple[bool, Optional[str]]:
     normalized = normalized.replace("5", "s")
 
     for brand in top_brands:
-        if normalized == brand:
+        # Homoglyph / confusable chars: e.g. facebo0k → normalized "facebook" but base != facebook → impersonation
+        if normalized == brand and base != normalized:
+            return True, brand
+        # Literal domain label is exactly the brand (e.g. real facebook.com) — skip heuristic for this brand
+        if normalized == brand and base == normalized:
             continue
         if brand in normalized:
             return True, brand
