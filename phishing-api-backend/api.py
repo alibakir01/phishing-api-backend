@@ -363,7 +363,7 @@ def predict(request: URLRequest):
         if "localhost" in url_lower or "127.0.0.1" in url_lower:
             return PredictionResponse(
                 is_phishing=False,
-                confidence_score=0.01,
+                confidence_score=100.0,
                 reasons=["Local development host detected (localhost / 127.0.0.1)."],
             )
 
@@ -377,7 +377,7 @@ def predict(request: URLRequest):
         if reg_domain in WHITELIST_DOMAINS and not is_open_redirect:
             return PredictionResponse(
                 is_phishing=False,
-                confidence_score=0.01,
+                confidence_score=100.0,
                 reasons=[f"Trusted infrastructure / allowlisted domain ({reg_domain})."],
             )
 
@@ -499,7 +499,7 @@ def predict(request: URLRequest):
 
         if is_dev_file or is_github_raw:
             is_phishing = False
-            confidence_percent = 5.0  # Skoru acımadan %5'e çakıyoruz
+            confidence_percent = 95.0
             reasons = ["Ignored risk: URL points to a raw developer file or source code."]
 
         # Advanced typo-squatting / fuzzy brand layer (overrides final response if triggered)
